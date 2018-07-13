@@ -11,17 +11,19 @@ users = UserDAO()
 
 @has_group(['admin'])
 def list_users(user: User) -> typing.List[UserType]:
-    """test documentacion"""
+    """lista usuarios con toda la información exepto contraseña"""
     return [UserType(user) for user in users.get_all()]
 
 
 @has_group(['admin', 'basic'])
-def new_user(user: User, new_user: UserType) -> UserType:
+def new_user(user: User, new_user: UserType):
+    """crea un nuevo usuario"""
     return users.create(new_user)
 
 
 @has_group('admin', 'basic')
 def hello_user(user: User) -> UserType:
+    """obtiene toda la informacion del usuario logueado"""
     return UserType(users.get_one('_id', ObjectId(user._id)))
 
 

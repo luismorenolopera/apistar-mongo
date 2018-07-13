@@ -27,7 +27,7 @@ class User(object):
 class UserComponent(Component):
     def resolve(self, authorization: http.Header) -> User:
         """
-        Determine the user associated with a request, using HTTP Token Authentication.
+        Determina el usuario asociado con una peticion, usando Token de autenticacion
         """
         if authorization is None:
             return None
@@ -57,22 +57,42 @@ class UserDAO():
     users = db['users']
 
     def create(self, user):
+        """
+            crea un usuario y retorna los datos del usuario creado
+        """
         user = remove_object_id(dict(user))
-        return self.users.insert_one(user)
+        try:
+            new_user = self.users.insert_one(user).inserted_id
+        except Exception as e:
+            raise exceptions.BadRequest('resource not created')
+        new_user = self.users.find_one({'_id':new_user})
+        return object_id_to_str(new_user)
 
 
     def get_one(self, key, value):
+        """
+            obtiene un usuario dada una llave y un valor,
+            en caso de pasar la llave con el nombre password lanzara
+            una exepcion
+        """
         if key == 'password':
-            return exceptions.BadRequest('password key is not allow')
+            raise exceptions.BadRequest('password key is not allow')
         return object_id_to_str(self.users.find_one({key: value}))
 
 
     def get_all(self):
-        # return self.users.find({}, {'password': 0})
+        """
+            obtiene todos los usuarios con sus respectivos datos,
+            exepto contraseña
+        """
         return object_id_to_str(self.users.find({}, {'password': 0}), many=True)
 
 
     def login(self, username, password):
+        """
+            comprueba usuario y contraseña y retorna un token con tiempo
+            de expiracion
+        """
         user = self.users.find_one({'username': username})
         if user:
             ph = PasswordHasher()
